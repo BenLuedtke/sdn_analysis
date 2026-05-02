@@ -1,4 +1,12 @@
 from .normalizers import normalize, tokenize, tokenize_no_particles
+from .arabic import (
+    is_arabic_script,
+    normalize_arabic_orthography,
+    transliterate_ala_lc,
+    arabic_to_canonical_latin,
+    normalize_arabic_latin_variants,
+    canonical_form,
+)
 from .scorers import (
     ensemble_score,
     jaro_winkler_score,
@@ -9,6 +17,12 @@ from .scorers import (
 )
 
 __all__ = [
+    "is_arabic_script",
+    "normalize_arabic_orthography",
+    "transliterate_ala_lc",
+    "arabic_to_canonical_latin",
+    "normalize_arabic_latin_variants",
+    "canonical_form",
     "normalize",
     "tokenize",
     "tokenize_no_particles",
