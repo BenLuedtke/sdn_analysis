@@ -13,9 +13,9 @@ This project demonstrates those problems and their solutions across four progres
 | Notebook | Finding |
 |---|---|
 | [01 — SDN EDA and Data Quality](#notebook-1-sdn-eda-and-data-quality) | 17.8% of SDN aliases are flagged low-quality; RUSSIA-EO14024 added 6,393 entities since Feb 2022 — more than IRAN and SDGT combined |
-| [02 — Fuzzy Name Matching](#notebook-2-fuzzy-name-matching-and-false-positive-analysis) | *(coming soon)* |
-| [03 — Arabic Script Handling](#notebook-3-arabic-script-and-non-latin-name-handling) | *(coming soon)* |
-| [04 — 50% Rule Graph Analysis](#notebook-4-50-rule-and-ownership-graph-analysis) | *(coming soon)* |
+| [02 — Fuzzy Name Matching](#notebook-2-fuzzy-name-matching-and-false-positive-analysis) | Ensemble matcher reaches F1=0.60; at 80% recall the false positive rate implies ~$182M/yr in investigation cost at a mid-size bank |
+| [03 — Arabic Script Handling](#notebook-3-arabic-script-and-non-latin-name-handling) | OFAC's Advanced XML is Latin-only; 704 Iran-program entities have demonstrable transliteration variant pairs; canonical normalization recovers matches on the common cases at zero precision cost |
+| [04 — 50% Rule Graph Analysis](#notebook-4-50-rule-and-ownership-graph-analysis) | 3,870 ownership edges in the OFAC data; IRISL alone controls 121 listed entities; Louvain community detection cleanly surfaces Iran, Russia, and TCO networks |
 
 ---
 
@@ -31,31 +31,31 @@ The SDN list is a real-world dataset with program-specific quality variance that
 
 ## Notebook 2: Fuzzy Name Matching and False Positive Analysis
 
-*(coming soon)*
+Builds a name-matching pipeline against the SDN list using three baseline algorithms — Jaro-Winkler, token set ratio, and Metaphone phonetic encoding — combined into a weighted ensemble with documented weights. Constructs a synthetic query set of 500 positive queries (SDN name variants) and 1,200 negatives (common US names plus Arabic and Russian near-miss names). Sweeps the precision-recall curve from threshold 0 to 1.0 and converts the false positive rate at each operating point into an annual investigation cost estimate.
 
-Builds a name-matching pipeline against the SDN list using Jaro-Winkler, token set ratio, and phonetic encoding. Constructs a synthetic query set of 500 positive queries (known SDN variants) and 1,200 negative queries (common names, near-miss negatives). Sweeps the precision-recall curve from threshold 0 to 1.0. The headline visualization shows why the sanctions screening industry exists: the false positive rate at 95% recall implies an annual investigation budget no one wants to calculate out loud.
+**Key findings:** Token set ratio substantially outperforms Jaro-Winkler (F1 0.61 vs 0.50) because word reordering is common in sanctions data. At the threshold required for 80% recall, the ensemble's 43% false positive rate implies ~$182M/year in investigation labor at 1M screenings/month and $35/alert. Phonetic encoding adds marginal lift and performs poorly on non-English names — a limitation that motivates Notebook 3.
 
-→ [`notebooks/02_fuzzy_matching_and_false_positives.ipynb`](notebooks/02_fuzzy_matching_and_false_positives.ipynb) *(pending)*
+→ [`notebooks/02_fuzzy_matching_and_false_positives.ipynb`](notebooks/02_fuzzy_matching_and_false_positives.ipynb)
 
 ---
 
 ## Notebook 3: Arabic Script and Non-Latin Name Handling
 
-*(coming soon)*
+Demonstrates the transliteration variance problem using real OFAC data. OFAC's Advanced XML stores all names in Latin transliteration only — a data quality finding in itself. 704 Iran-program entities have demonstrable near-duplicate alias pairs that differ only in romanization convention ("SALAMI Hossein" / "SALAMI Hoseyn", "KHATAM AL-ANBYA" / "KHATAM OL AMBIA"). Builds a script-aware canonical normalizer that standardizes common Arabic-origin name patterns in Latin script, and a complete Arabic orthographic normalization + ALA-LC transliteration pipeline for when Arabic-script input arrives from customer data.
 
-Extracts the multilingual SDN subset (Iran, Hezbollah-related SDGT, Hamas-related designations — ~500 entities). Demonstrates that "محمد" correctly romanizes as Mohamed, Mohammed, Muhammad, Mohamad, or Muhammed depending on transliteration standard, and that naive Jaro-Winkler treats these as different names. Builds a script-aware canonical-form matcher using Arabic orthographic normalization + ALA-LC transliteration. Runs the eval harness from Notebook 2 against the Iran subset; the script-aware matcher improves F1 at the balanced threshold.
+**Key findings:** Canonical normalization recovers matches on the common cases (Mohammed/Muhammad, Hossein/Husayn, Defence/Defense) at zero precision cost — without touching the matching threshold. Residual failures require source-script access, motivating the honest discussion of where Latin-layer normalization hits its ceiling.
 
-→ [`notebooks/03_arabic_script_handling.ipynb`](notebooks/03_arabic_script_handling.ipynb) *(pending)*
+→ [`notebooks/03_arabic_script_handling.ipynb`](notebooks/03_arabic_script_handling.ipynb)
 
 ---
 
 ## Notebook 4: 50% Rule and Ownership Graph Analysis
 
-*(coming soon)*
+Demonstrates that sanctions screening is a graph traversal problem, not a list lookup. Parses 8,558 directed relationships from the OFAC Advanced XML `ProfileRelationships` section — including 3,870 ownership/control edges — into a NetworkX directed graph. Implements the OFAC 50% rule traversal with cycle detection, multi-SDN aggregation, and configurable unknown-weight handling. Walks through the IRISL case study: Iran's state shipping company directly owns 121 listed vessel subsidiaries, all of which would remain effectively blocked via the ownership graph even if IRISL were removed from the explicit list. Runs Louvain community detection; the clusters map cleanly to Iran shipping conglomerates, Russia energy holdings, and TCO networks.
 
-Demonstrates that sanctions screening is a graph traversal problem, not a list lookup. Pulls OpenSanctions ownership data for Russia post-2022, builds a directed ownership graph in NetworkX, and implements the OFAC 50% rule traversal: for each non-SDN node, compute aggregate SDN ownership across all paths, flag any node ≥ 50%. Quantifies the explicit-list iceberg. Walks through a real case study (the Kerimov network). Runs Louvain community detection; the clusters map to known sanctioned networks. Discusses frankly where commercial vendors (Sayari, Kharon, Orbis) win on data coverage rather than algorithmic novelty.
+**Key findings:** 1,245 of 18,899 SDN entities own or control other listed entities. The algorithm is straightforward; data coverage is the hard problem and the commercial gap that Sayari, Kharon, and Orbis exist to fill.
 
-→ [`notebooks/04_fifty_percent_rule_graph.ipynb`](notebooks/04_fifty_percent_rule_graph.ipynb) *(pending)*
+→ [`notebooks/04_fifty_percent_rule_graph.ipynb`](notebooks/04_fifty_percent_rule_graph.ipynb)
 
 ---
 
