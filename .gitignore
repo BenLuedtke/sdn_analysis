@@ -84,6 +84,9 @@ data/interim/*
 data/processed/*
 !data/**/.gitkeep
 
+# Internal planning document
+project_plan.md
+
 # IPython
 profile_default/
 ipython_config.py
